@@ -1,14 +1,9 @@
-// Fragment Shader – file "minimal.frag"
+#version 120
 
-#version 140
-
-precision highp float; // needed only for version 1.30
-
-in  vec3 ex_Color;
-out vec4 out_Color;
-
-void main(void)
+void main( void )
 {
-	out_Color = vec4(ex_Color,1.0);
+    gl_FragColor[0] = 0.0;
+    gl_FragColor[1] = 0.0;
+    gl_FragColor[2] = 1.0;
 }
 

@@ -17,7 +17,8 @@ LIB = -lglut -lGL -lGLEW
 VPATH = src
 
 # define the source files
-SRC = main.cpp
+SRC = main.cpp \
+	render.cpp
 
 # the build target executable
 TARGET = out

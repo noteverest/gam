@@ -3,11 +3,12 @@
  * handles rendering with OpenGL
  */
 
+
+int renderMain( int argc, char* argv[] );
+
 bool initResources( void );
 
-void render( SDL_Window* window );
+void display();
 
-void freeResources();
-
-int renderMain(int argc, char* argv[]);
+void resize();
 
