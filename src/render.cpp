@@ -7,10 +7,10 @@
 #define FREEGLUT_STATIC
 #include <GL/freeglut.h>
 
-#include "render.h"
+#include "render.hpp"
+#include "file_io.hpp"
 
 #include <cstdlib>
-#include <iostream>
 #include <string>
 
 
@@ -20,6 +20,40 @@ GLuint program;
 // triangle vertices or something
 GLint attribute_coord2d;
 
+/**
+ * Display compilation errors from the OpenGL shader compiler
+ */
+void printLog( GLuint object )
+{ 
+    GLint log_length = 0;
+    if( glIsShader( object ) )
+    {
+        glGetShaderiv( object, GL_INFO_LOG_LENGTH, &log_length );
+    }
+    else if( glIsProgram( object ) )
+    {
+        glGetProgramiv( object, GL_INFO_LOG_LENGTH, &log_length );
+    }
+    else
+    {
+        fprintf( stderr, "printLog: Not a shader or program\n" );
+    }
+
+    char *log = (char*)malloc( log_length );
+
+    if( glIsShader( object ) )
+    {
+        glGetShaderInfoLog( object, log_length, NULL, log );
+    }
+    else if( glIsProgram( object ) )
+    {
+        glGetProgramInfoLog( object, log_length, NULL, log );
+    }
+
+    fprintf( stderr, log );
+    free( log );
+}
+
 bool initResources( void )
 {
     GLint compile_ok = GL_FALSE;
@@ -27,36 +61,32 @@ bool initResources( void )
 
     // compile vertex shader
     GLuint vs = glCreateShader( GL_VERTEX_SHADER );
-    const char *vs_source =
-        "#version 120\n"
-        "attribute vec2 coord2d;"
-        "void main( void ) {"
-        "   gl_Position = vec4( coord2d, 0.0, 1.0 );"
-        "}"; // TODO this is horrible
+    size_t fsize;
+    char *vs_source = loadFile( "src/minimal.vert", fsize );
+    //printf( "minimal.vert:\n%s", vs_source );
     glShaderSource( vs, 1, &vs_source, NULL );
     glCompileShader( vs );
     glGetShaderiv( vs, GL_COMPILE_STATUS, &compile_ok );
+    free( vs_source );
     if( !compile_ok )
     {
-        std::cerr << "Error in vertex shader" << std::endl;
+        fprintf( stderr, "Error in vertex shader\n" );
+        printLog( vs );
         return false;
     }
 
     // compile fragment shader
     GLuint fs = glCreateShader( GL_FRAGMENT_SHADER );
-    const char *fs_source = 
-        "#version 120\n"
-        "void main( void ) {"
-        "   gl_FragColor[0] = 0.0;"
-        "   gl_FragColor[1] = 0.0;"
-        "   gl_FragColor[2] = 1.0;"
-        "}"; // TODO this is horrible
+    char *fs_source = loadFile( "src/minimal.frag", fsize );
+    //printf( "minimal.frag:\n%s", fs_source );
     glShaderSource( fs, 1, &fs_source, NULL );
     glCompileShader( fs );
     glGetShaderiv( fs, GL_COMPILE_STATUS, &compile_ok );
+    free( fs_source );
     if( !compile_ok )
     {
-        std::cerr << "Error in fragment shader" << std::endl;
+        fprintf( stderr, "Error in fragment shader\n" );
+        printLog( fs );
         return false;
     }
 
@@ -68,7 +98,8 @@ bool initResources( void )
     glGetProgramiv( program, GL_LINK_STATUS, &link_ok );
     if( !link_ok )
     {
-        std::cerr << "Error in glLinkProgram" << std::endl;
+        fprintf( stderr, "Error in glLinkProgram\n" );
+        printLog( program );
         return false;
     }
 
@@ -77,7 +108,7 @@ bool initResources( void )
     attribute_coord2d = glGetAttribLocation( program, attribute_name );
     if( attribute_coord2d == -1 )
     {
-        std::cerr << "Could not bind attribute " << attribute_name << std::endl;
+        fprintf( stderr, "Could not bind attribute %s\n", attribute_name );
         return false;
     }
 
@@ -140,11 +171,11 @@ int renderMain(int argc, char* argv[])
     if( GLEW_OK != err )
     {
         /* Problem: glewInit failed, something is seriously wrong. */
-        std::cout << "glewInit failed, aborting." << std::endl;
+        printf( "glewInit failed, aborting.\n" );
         exit( 1 );
     }
-    std::cout << "Status: Using GLEW " << glewGetString(GLEW_VERSION) << std::endl;
-    std::cout << "OpenGL version " << glGetString(GL_VERSION) << " supported" << std::endl;
+    printf( "Status: Using GLEW %s\n", glewGetString( GLEW_VERSION ) );
+    printf( "OpenGL version %s supported\n", glGetString( GL_VERSION ) );
 
     // general init
     initResources();

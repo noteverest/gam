@@ -2,7 +2,7 @@
 CC = g++
 
 # compiler flags
-CFLAG = -g -Wall
+CFLAG = -g -std=c++11 -Wall -Wextra
 
 # define libraries to link into executable
 LIB = -lglut -lGL -lGLEW
@@ -18,7 +18,8 @@ VPATH = src
 
 # define the source files
 SRC = main.cpp \
-	render.cpp
+	render.cpp \
+	file_io.cpp
 
 # the build target executable
 TARGET = out

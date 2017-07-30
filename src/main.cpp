@@ -6,7 +6,7 @@
 #include <iostream>
 #include <string>
 
-#include "render.h"
+#include "render.hpp"
 
 int main(int argc, char* argv[])
 {

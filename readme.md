@@ -1,9 +1,13 @@
 this project is called gum
 
-it's going to be volume control tetris
+i don't really know what i'm doing but i'm trying to make
+something that looks like a game
 
 design doc:
-# tetris
-# volume gets higher or lower based on highest row
-# plays classic tetris music
+# clone something easy, like tetris
+
+todo:
+# figure out where to keep the shaders
+# generalize posix code
+# do lots more work
 
