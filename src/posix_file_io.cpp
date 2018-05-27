@@ -1,21 +1,20 @@
 /*
- * file_io.cpp
- * very basic file io
+ * posix_file_io.cpp
  */
 
 #include "file_io.hpp"
 
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 
-// TODO: POSIX only - stat
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 
 
 // loadFile with C-style file IO
-// allocates memory - so need to free after use
+// free memory after use
 char* loadFile( const char *fname, size_t &fsize )
 {
     FILE *fp;
@@ -23,7 +22,7 @@ char* loadFile( const char *fname, size_t &fsize )
     size_t amtRead;
 
     fsize = getFilesize( fname );
-    fbuf = (char *)malloc( fsize + 1 );
+    fbuf = new char[fsize + 1];
     memset( fbuf, 0, fsize + 1 );
 
     fp = fopen( fname, "r" );
@@ -45,8 +44,7 @@ char* loadFile( const char *fname, size_t &fsize )
 
 
 // Returns the filesize in bytes
-// TODO: POSIX only - stat
-size_t getFilesize( const char *fname )
+uint64_t getFilesize( const char *fname )
 {
     struct stat statbuf;
     memset( &statbuf, 0, sizeof( statbuf ) );
@@ -54,6 +52,6 @@ size_t getFilesize( const char *fname )
     {
         // TODO: handle failure
     }
-    return (size_t)statbuf.st_size;
+    return (uint64_t)statbuf.st_size;
 }
 

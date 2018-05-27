@@ -1,4 +1,11 @@
 # assets and artifacts
-data
 out
+data
 
+*.dll
+
+tags
+etags
+
+*.swp
+*.bak

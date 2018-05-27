@@ -4,7 +4,7 @@
  */
 
 #include <GL/glew.h>
-#define FREEGLUT_STATIC
+//#define FREEGLUT_STATIC
 #include <GL/freeglut.h>
 
 #include "render.hpp"
@@ -24,7 +24,7 @@ GLint attribute_coord2d;
  * Display compilation errors from the OpenGL shader compiler
  */
 void printLog( GLuint object )
-{ 
+{
     GLint log_length = 0;
     if( glIsShader( object ) )
     {
@@ -39,7 +39,7 @@ void printLog( GLuint object )
         fprintf( stderr, "printLog: Not a shader or program\n" );
     }
 
-    char *log = (char*)malloc( log_length );
+    char* log = new char[log_length];
 
     if( glIsShader( object ) )
     {
@@ -51,7 +51,7 @@ void printLog( GLuint object )
     }
 
     fprintf( stderr, log );
-    free( log );
+    delete log;
 }
 
 bool initResources( void )
@@ -126,9 +126,9 @@ void display()
     glEnableVertexAttribArray( attribute_coord2d );
     GLfloat triangle_vertices[] =
     {
-        0.0,    0.8,
-        -0.8,   -0.8,
-        0.8,    -0.8,
+        0.0f,    0.8f,
+        -0.8f,   -0.8f,
+        0.8f,    -0.8f,
     };
 
     // describe our vertices array to OpenGL
@@ -185,8 +185,8 @@ int renderMain(int argc, char* argv[])
     // setup freeglut callbacks
     glutDisplayFunc( display );
     glutReshapeFunc( reshape );
-    
-    // start loop   
+
+    // start loop
     glutMainLoop();
 
     return 0;
