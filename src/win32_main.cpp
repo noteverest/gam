@@ -3,8 +3,10 @@
  */
 
 #include <cstdlib>
+#include <cstdio>
 
 #include "Windows.h"
+#include "Shellapi.h"
 
 #include "render.hpp"
 

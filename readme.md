@@ -1,13 +1,10 @@
-this project is called gum
+## project gam
 
-i don't really know what i'm doing but i'm trying to make
-something that looks like a game
-
-design doc:
-* clone something easy, like tetris
+trying to make something that looks like a game
 
 todo:
-* figure out where to keep the shaders
-* generalize posix code
-* do lots more work
+* generalize platform-specific code better
+* figure out what to do about the shaders
+* draw something other than a triangle
 
+dependencies: opengl, freeglut, glew

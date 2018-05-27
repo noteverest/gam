@@ -3,11 +3,14 @@
 mkdir out
 pushd out
 cl -Zi ^
- /D "_UNICODE" ^
- /D "UNICODE" ^
  /EHsc ^
+ /D "UNICODE" ^
+ /D "_UNICODE" ^
  ..\src\win32_main.cpp ^
- ..\src\render.cpp ^
  ..\src\win32_file_io.cpp ^
- OpenGL32.lib
+ ..\src\render.cpp ^
+ Shell32.lib ^
+ OpenGL32.lib ^
+ glew32.lib ^
+ freeglut.lib
 popd

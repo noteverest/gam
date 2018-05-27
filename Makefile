@@ -17,9 +17,9 @@ LIB = -lglut -lGL -lGLEW
 VPATH = src
 
 # define the source files
-SRC = main.cpp \
+SRC = posix_main.cpp \
+	posix_file_io.cpp \
 	render.cpp \
-	file_io.cpp
 
 # the build target executable
 TARGET = out

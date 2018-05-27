@@ -15,7 +15,7 @@
  * Load a file into a buffer.
  * Free memory after use.
  */
-char* loadFile( const char *fname, size_t &fsize )
+char* loadFile( const char *fname, uint64_t &fsize )
 {
     FILE *fp;
     char *fbuf;
@@ -49,10 +49,11 @@ char* loadFile( const char *fname, size_t &fsize )
 uint64_t getFilesize( const char *fname )
 {
     HANDLE file;
-    PLARGE_INTEGER file_size;
+    LARGE_INTEGER fsize_struct;
     LPWSTR fname_w;
-    int fname_w_sz;
-    int fname_sz;
+    int fname_w_sz = 0;
+    int fname_sz = 0;
+    uint64_t fsize = 0;
 
     // Convert filename to UTF-16
     fname_sz = strlen( fname ) + 1;
@@ -82,8 +83,16 @@ uint64_t getFilesize( const char *fname )
         FILE_ATTRIBUTE_NORMAL,
         NULL );
 
-    GetFileSizeEx( file, file_size );
+    if( INVALID_HANDLE_VALUE == file )
+    {
+        fprintf( stderr, "Error opening file at %s (%d)\n", fname, GetLastError() );
+    }
+    else
+    {
+        GetFileSizeEx( file, &fsize_struct );
+        fsize = fsize_struct.QuadPart;
+    }
 
-    return file_size->QuadPart;
+    return fsize;
 }
 

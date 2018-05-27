@@ -17,7 +17,7 @@
 // GLSL program
 GLuint program;
 
-// triangle vertices or something
+// Triangle vertices or something
 GLint attribute_coord2d;
 
 /**
@@ -58,16 +58,17 @@ bool initResources( void )
 {
     GLint compile_ok = GL_FALSE;
     GLint link_ok = GL_FALSE;
+    uint64_t fsize = 0;
 
-    // compile vertex shader
+    // Compile vertex shader
     GLuint vs = glCreateShader( GL_VERTEX_SHADER );
-    size_t fsize;
-    char *vs_source = loadFile( "src/minimal.vert", fsize );
+    // TODO: paths not multiplatform
+    char *vs_source = loadFile( "..\\src\\minimal.vert", fsize );
     //printf( "minimal.vert:\n%s", vs_source );
     glShaderSource( vs, 1, &vs_source, NULL );
     glCompileShader( vs );
     glGetShaderiv( vs, GL_COMPILE_STATUS, &compile_ok );
-    free( vs_source );
+    delete vs_source;
     if( !compile_ok )
     {
         fprintf( stderr, "Error in vertex shader\n" );
@@ -77,12 +78,13 @@ bool initResources( void )
 
     // compile fragment shader
     GLuint fs = glCreateShader( GL_FRAGMENT_SHADER );
-    char *fs_source = loadFile( "src/minimal.frag", fsize );
+    // TODO: paths not multiplatform
+    char *fs_source = loadFile( "..\\src\\minimal.frag", fsize );
     //printf( "minimal.frag:\n%s", fs_source );
     glShaderSource( fs, 1, &fs_source, NULL );
     glCompileShader( fs );
     glGetShaderiv( fs, GL_COMPILE_STATUS, &compile_ok );
-    free( fs_source );
+    delete fs_source;
     if( !compile_ok )
     {
         fprintf( stderr, "Error in fragment shader\n" );

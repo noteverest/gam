@@ -13,9 +13,11 @@
 #include <unistd.h>
 
 
-// loadFile with C-style file IO
-// free memory after use
-char* loadFile( const char *fname, size_t &fsize )
+/*
+ * loadFile with C-style file IO
+ * free memory after use
+ */
+char* loadFile( const char *fname, uint64_t &fsize )
 {
     FILE *fp;
     char *fbuf;
@@ -43,7 +45,9 @@ char* loadFile( const char *fname, size_t &fsize )
 }
 
 
-// Returns the filesize in bytes
+/*
+ * Returns the filesize in bytes
+ */
 uint64_t getFilesize( const char *fname )
 {
     struct stat statbuf;
