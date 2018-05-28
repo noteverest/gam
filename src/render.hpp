@@ -3,12 +3,15 @@
  * handles rendering with OpenGL
  */
 
+#include <GL/glew.h>
+#include <GL/freeglut.h>
 
-int renderMain( int argc, char* argv[] );
-
-bool initResources( void );
+GLuint createShader( const char *filename, GLenum type );
 
 void display();
 
-void resize();
+bool initResources( void );
 
+int renderMain( int argc, char* argv[] );
+
+void reshape( int width, int height );

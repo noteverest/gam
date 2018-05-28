@@ -17,42 +17,94 @@
 // GLSL program
 GLuint program;
 
-// Triangle vertices or something
+// Attributes
 GLint attribute_coord2d;
+GLint attribute_v_color;
 
-/**
- * Display compilation errors from the OpenGL shader compiler
+// Vertex buffer objects
+GLuint vbo_triangle;
+GLuint vbo_triangle_colors;
+
+
+static void printLog( GLuint object );
+
+/*
+ * Compile a shader given a filename
  */
-void printLog( GLuint object )
+GLuint createShader( const char *filename, GLenum type )
 {
-    GLint log_length = 0;
-    if( glIsShader( object ) )
+    GLint compile_ok = GL_FALSE;
+    GLint link_ok = GL_FALSE;
+    uint64_t fsize = 0;
+
+    const GLchar *source = loadFile( filename, fsize );
+    if( NULL == source )
     {
-        glGetShaderiv( object, GL_INFO_LOG_LENGTH, &log_length );
+        fprintf( stderr, "Error opening %s\n", filename );
+        return 0;
     }
-    else if( glIsProgram( object ) )
+    GLuint shader = glCreateShader( type );
+    glShaderSource( shader, 1, &source, NULL );
+    delete source;
+
+    glCompileShader( shader );
+    glGetShaderiv( shader, GL_COMPILE_STATUS, &compile_ok );
+    if( GL_FALSE == compile_ok )
     {
-        glGetProgramiv( object, GL_INFO_LOG_LENGTH, &log_length );
-    }
-    else
-    {
-        fprintf( stderr, "printLog: Not a shader or program\n" );
+        fprintf( stderr, "Error in shader %s\n", filename );
+        printLog( shader );
+        glDeleteShader( shader );
+        return 0;
     }
 
-    char* log = new char[log_length];
-
-    if( glIsShader( object ) )
-    {
-        glGetShaderInfoLog( object, log_length, NULL, log );
-    }
-    else if( glIsProgram( object ) )
-    {
-        glGetProgramInfoLog( object, log_length, NULL, log );
-    }
-
-    fprintf( stderr, log );
-    delete log;
+    return shader;
 }
+
+
+void display()
+{
+    // Enable alpha
+    glEnable( GL_BLEND );
+    glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
+
+    // Clear background to white
+    glClearColor( 1.0, 1.0, 1.0, 1.0 );
+    glClear( GL_COLOR_BUFFER_BIT );
+
+    glUseProgram( program );
+
+    // describe our vertices array to OpenGL
+    glBindBuffer( GL_ARRAY_BUFFER, vbo_triangle );
+    glEnableVertexAttribArray( attribute_coord2d );
+    glVertexAttribPointer(
+        attribute_coord2d,  // attribute
+        2,                  // number of elements per vertex, here (x,y)
+        GL_FLOAT,           // the type of each element
+        GL_FALSE,           // take our values as-is
+        0,                  // no extra data between each position
+        0 );                // offset of first element
+
+    // describe our colors array to OpenGL
+    glEnableVertexAttribArray( attribute_v_color );
+    glBindBuffer( GL_ARRAY_BUFFER, vbo_triangle_colors );
+    glVertexAttribPointer(
+        attribute_v_color,
+        3,
+        GL_FLOAT,
+        GL_FALSE,
+        0,
+        0 );
+
+    // push each element in buffer_vertices to the vertex shader
+    glDrawArrays( GL_TRIANGLES, 0, 3 );
+
+    glDisableVertexAttribArray( attribute_coord2d );
+    glDisableVertexAttribArray( attribute_v_color );
+
+    // Display the result
+    glutSwapBuffers();
+}
+
 
 bool initResources( void )
 {
@@ -60,39 +112,16 @@ bool initResources( void )
     GLint link_ok = GL_FALSE;
     uint64_t fsize = 0;
 
-    // Compile vertex shader
-    GLuint vs = glCreateShader( GL_VERTEX_SHADER );
+    // Compile vertex and fragment shaders
     // TODO: paths not multiplatform
-    char *vs_source = loadFile( "..\\src\\minimal.vert", fsize );
-    //printf( "minimal.vert:\n%s", vs_source );
-    glShaderSource( vs, 1, &vs_source, NULL );
-    glCompileShader( vs );
-    glGetShaderiv( vs, GL_COMPILE_STATUS, &compile_ok );
-    delete vs_source;
-    if( !compile_ok )
+    GLuint vs = createShader( "..\\src\\minimal.vert", GL_VERTEX_SHADER );
+    GLuint fs = createShader( "..\\src\\minimal.frag", GL_FRAGMENT_SHADER );
+    if( 0 == vs || 0 == fs )
     {
-        fprintf( stderr, "Error in vertex shader\n" );
-        printLog( vs );
         return false;
     }
 
-    // compile fragment shader
-    GLuint fs = glCreateShader( GL_FRAGMENT_SHADER );
-    // TODO: paths not multiplatform
-    char *fs_source = loadFile( "..\\src\\minimal.frag", fsize );
-    //printf( "minimal.frag:\n%s", fs_source );
-    glShaderSource( fs, 1, &fs_source, NULL );
-    glCompileShader( fs );
-    glGetShaderiv( fs, GL_COMPILE_STATUS, &compile_ok );
-    delete fs_source;
-    if( !compile_ok )
-    {
-        fprintf( stderr, "Error in fragment shader\n" );
-        printLog( fs );
-        return false;
-    }
-
-    // compile GLSL program
+    // Compile GLSL program
     program = glCreateProgram();
     glAttachShader( program, vs );
     glAttachShader( program, fs );
@@ -105,10 +134,41 @@ bool initResources( void )
         return false;
     }
 
-    // pass triangle vertices to vertex shader
-    const char* attribute_name = "coord2d";
+    // Store triangle vertices in VBO
+    GLfloat triangle_vertices[] =
+    {
+        0.0f,    0.8f,
+        -0.8f,   -0.8f,
+        0.8f,    -0.8f,
+    };
+    glGenBuffers( 1, &vbo_triangle );
+    glBindBuffer( GL_ARRAY_BUFFER, vbo_triangle );
+    glBufferData( GL_ARRAY_BUFFER, sizeof(triangle_vertices), triangle_vertices, GL_STATIC_DRAW );
+
+    // Pass triangle vertices to vertex shader
+    char* attribute_name = "coord2d";
     attribute_coord2d = glGetAttribLocation( program, attribute_name );
     if( attribute_coord2d == -1 )
+    {
+        fprintf( stderr, "Could not bind attribute %s\n", attribute_name );
+        return false;
+    }
+
+    // Store triangle colors in VBO
+    GLfloat triangle_colors[] =
+    {
+        1.0f,   1.0f,   0.0f,
+        0.0f,   0.0f,   1.0f,
+        1.0f,   0.0f,   0.0f,
+    };
+    glGenBuffers( 1, &vbo_triangle_colors );
+    glBindBuffer( GL_ARRAY_BUFFER, vbo_triangle_colors );
+    glBufferData( GL_ARRAY_BUFFER, sizeof(triangle_colors), triangle_colors, GL_STATIC_DRAW );
+
+    // Pass triangle colors to vertex shader
+    attribute_name = "v_color";
+    attribute_v_color = glGetAttribLocation( program, attribute_name );
+    if( -1 == attribute_v_color )
     {
         fprintf( stderr, "Could not bind attribute %s\n", attribute_name );
         return false;
@@ -118,54 +178,13 @@ bool initResources( void )
 }
 
 
-void display()
-{
-    // clear background to white
-    glClearColor( 1.0, 1.0, 1.0, 1.0 );
-    glClear( GL_COLOR_BUFFER_BIT );
-
-    glUseProgram( program );
-    glEnableVertexAttribArray( attribute_coord2d );
-    GLfloat triangle_vertices[] =
-    {
-        0.0f,    0.8f,
-        -0.8f,   -0.8f,
-        0.8f,    -0.8f,
-    };
-
-    // describe our vertices array to OpenGL
-    glVertexAttribPointer(
-        attribute_coord2d,  // attribute
-        2,                  // number of elements per vertex, here (x,y)
-        GL_FLOAT,           // the type of each element
-        GL_FALSE,           // take our values as-is
-        0,                  // no extra data between each position
-        triangle_vertices   // pointer to the C array
-    );
-
-    // push each element in buffer_vertices to the vertex shader
-    glDrawArrays( GL_TRIANGLES, 0, 3 );
-
-    glDisableVertexAttribArray( attribute_coord2d );
-
-    // Display the result
-    glutSwapBuffers();
-}
-
-
-void reshape( int width, int height )
-{
-    // TODO
-}
-
-
 int renderMain(int argc, char* argv[])
 {
     // init freeglut
     glutInit( &argc, argv );
     glutInitDisplayMode( GLUT_DOUBLE | GLUT_RGBA );
-    glutInitWindowSize( 800, 600 ); // TODO
-    glutCreateWindow( "Triangle Test" );
+    glutInitWindowSize( 800, 600 ); // TODO: resolution
+    glutCreateWindow( "gam" );
 
     // init glew
     glewInit();
@@ -173,11 +192,16 @@ int renderMain(int argc, char* argv[])
     if( GLEW_OK != err )
     {
         /* Problem: glewInit failed, something is seriously wrong. */
-        printf( "glewInit failed, aborting.\n" );
+        fprintf( stderr, "glewInit failed, aborting.\n" );
         exit( 1 );
     }
     printf( "Status: Using GLEW %s\n", glewGetString( GLEW_VERSION ) );
     printf( "OpenGL version %s supported\n", glGetString( GL_VERSION ) );
+    if( !GLEW_VERSION_2_0 )
+    {
+        fprintf( stderr, "Your graphic card does not support OpenGL 2.0\n" );
+        exit( 1 );
+    }
 
     // general init
     initResources();
@@ -194,3 +218,43 @@ int renderMain(int argc, char* argv[])
     return 0;
 }
 
+
+void reshape( int width, int height )
+{
+    // TODO
+}
+
+
+/*
+ * Display compilation errors from the OpenGL shader compiler
+ */
+static void printLog( GLuint object )
+{
+    GLint log_length = 0;
+    if( glIsShader( object ) )
+    {
+        glGetShaderiv( object, GL_INFO_LOG_LENGTH, &log_length );
+    }
+    else if( glIsProgram( object ) )
+    {
+        glGetProgramiv( object, GL_INFO_LOG_LENGTH, &log_length );
+    }
+    else
+    {
+        fprintf( stderr, "%s: Not a shader or program\n", __func__ );
+    }
+
+    char* log = new char[log_length];
+
+    if( glIsShader( object ) )
+    {
+        glGetShaderInfoLog( object, log_length, NULL, log );
+    }
+    else if( glIsProgram( object ) )
+    {
+        glGetProgramInfoLog( object, log_length, NULL, log );
+    }
+
+    fprintf( stderr, log );
+    delete log;
+}
